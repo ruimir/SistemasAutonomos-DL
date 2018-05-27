@@ -65,7 +65,7 @@ def visualize_GOOGL():
 # seq_len é o tamanho da janela a ser utilizada na serie temporal
 def load_data(df_dados, janela):
     qt_atributos = len(df_dados.columns)
-    mat_dados = df_dados.values  # converter dataframe para matriz (lista com lista de cada registo)
+    mat_dados = df_dados.as_matrix()  # converter dataframe para matriz (lista com lista de cada registo)
     tam_sequencia = janela + 1
     res = []
     for i in range(len(mat_dados) - tam_sequencia):  # numero de registos - tamanho da sequencia
@@ -102,7 +102,7 @@ def print_series_prediction(y_test, predic):
     for i in range(len(y_test)):  # para imprimir tabela de previsoes
         racio.append((y_test[i] / predic[i]) - 1)
         diff.append(abs(y_test[i] - predic[i]))
-    print('valor: %f ---> Previsão: %f Diff: %f Racio: %f' % (y_test[i], predic[i], diff[i], racio[i]))
+        print('valor: %f ---> Previsão: %f Diff: %f Racio: %f' % (y_test[i], predic[i], diff[i], racio[i]))
     plt.plot(y_test, color='blue', label='y_test')
     plt.plot(predic, color='red', label='prediction')  # este deu uma linha em branco
     plt.plot(diff, color='green', label='diff')
@@ -130,7 +130,7 @@ def LSTM_utilizando_GOOGL_data():
     # model = build_model(janela)
     model = build_model2(janela)
     # model.fit(X_train, y_train, batch_size=512, epochs=500, validation_split=0.1, verbose=1)
-    model.fit(X_train, y_train, batch_size=512, epochs=1, validation_split=0.1, verbose=1)
+    model.fit(X_train, y_train, batch_size=512, epochs=100, validation_split=0.1, verbose=1)
     print_model(model, "lstm_model.png")
     trainScore = model.evaluate(X_train, y_train, verbose=0)
     print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore[0], math.sqrt(trainScore[0])))

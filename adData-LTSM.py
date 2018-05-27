@@ -23,7 +23,7 @@ def get_ad_data(normalized=0, file_name=None):
     df.drop(df.columns[[0]], axis=1, inplace=True)  # Largar coluna com data
     if normalized == 1:
         scaler = MinMaxScaler(feature_range=(0, 1))
-        dataset = scaler.fit_transform(df)
+        dataset = pd.DataFrame(scaler.fit_transform(df))
         return dataset
     return df
 
@@ -41,10 +41,10 @@ def load_data(df_dados, janela):
     mat_dados = df_dados.values  # converter dataframe para matriz (lista com lista de cada registo)
     tam_sequencia = janela + 1
     res = []
-    for i in range(len(mat_dados) - tam_sequencia):  # numero de registos - tamanho da sequencia
+    for i in range(len(mat_dados)-janela):  # numero de registos - tamanho da sequencia
         res.append(mat_dados[i: i + tam_sequencia])
     res = np.array(res)  # dá como resultado um np com uma lista de matrizes (janela deslizante ao longo da serie)
-    qt_casos_treino = 24 # dois anos de treino, um de teste
+    qt_casos_treino = 24  # dois anos de treino, um de teste
     train = res[:qt_casos_treino, :]
     x_train = train[:, :-1]  # menos um registo pois o ultimo registo é o registo a seguir à janela
     y_train = train[:, -1][:, -1]  # para ir buscar o último atributo para a lista dos labels
@@ -55,8 +55,6 @@ def load_data(df_dados, janela):
     return [x_train, y_train, x_test, y_test]
 
 
-
-
 # imprime um grafico com os valores de teste e com as correspondentes tabela de previsões
 def print_series_prediction(y_test, predic):
     diff = []
@@ -64,7 +62,7 @@ def print_series_prediction(y_test, predic):
     for i in range(len(y_test)):  # para imprimir tabela de previsoes
         racio.append((y_test[i] / predic[i]) - 1)
         diff.append(abs(y_test[i] - predic[i]))
-    print('valor: %f ---> Previsão: %f Diff: %f Racio: %f' % (y_test[i], predic[i], diff[i], racio[i]))
+        print('valor: %f ---> Previsão: %f Diff: %f Racio: %f' % (y_test[i], predic[i], diff[i], racio[i]))
     plt.plot(y_test, color='blue', label='y_test')
     plt.plot(predic, color='red', label='prediction')  # este deu uma linha em branco
     plt.plot(diff, color='green', label='diff')
@@ -79,44 +77,44 @@ def print_model(model, fich):
     plot_model(model, to_file=fich, show_shapes=True, show_layer_names=True)
 
 
-
-
 # Etapa 2 - Definir a topologia da rede (arquitectura do modelo) e compilar
 def build_model2(janela):
     model = Sequential()
-    model.add(LSTM(4, input_shape=(1, 2))) ## TODO:ver melhor
+    model.add(LSTM(6, input_shape=(janela, 2)))
     model.add(Dense(1))
-    model.compile(loss='mean_squared_error', optimizer='adam')
-    model.compile(loss='mse', optimizer='sgd', metrics=['accuracy'])
+    model.compile(loss='mean_squared_error', optimizer='sgd', metrics=['accuracy'])
     return model
 
+def build_model3(janela):
+    model = Sequential()
+    model.add(LSTM(128, input_shape=(janela, 2), return_sequences=True))
+    model.add(Dropout(0.2))
+    model.add(LSTM(64, input_shape=(janela, 2), return_sequences=False))
+    # model.add(Dropout(0.2))
+    model.add(Dense(1))
+    model.compile(loss='mean_squared_error', optimizer='sgd', metrics=['accuracy'])
+    return model
+
+
 def load_ad_dataset():
-    return get_ad_data(0, 'adData.csv')
+    return get_ad_data(1, 'adData.csv')
 
 
 def LSTM_utilizando_ad_data():
-    df = load_ad_dataset()
-    print("df", df.shape)
-    janela = 1  # tamanho da Janela deslizante um ano
-    X_train, y_train, X_test, y_test = load_data(df, janela)
-    print("X_train", X_train.shape)
-    print("y_train", y_train.shape)
-    print("X_test", X_test.shape)
-    print("y_test", y_test.shape)
+    pass
 
 
 if __name__ == '__main__':
-    # visualize_GOOGL()
     df = load_ad_dataset()
     print("df", df.shape)
-    janela = 1  # tamanho da Janela deslizante um ano
+    janela = 2  # tamanho da Janela deslizante um ano
     X_train, y_train, X_test, y_test = load_data(df, janela)
     print("X_train", X_train.shape)
     print("y_train", y_train.shape)
     print("X_test", X_test.shape)
     print("y_test", y_test.shape)
     model = build_model2(janela)
-    model.fit(X_train, y_train, batch_size=10, epochs=1, validation_split=0.1, verbose=1)
+    model.fit(X_train, y_train, batch_size=10, epochs=5000, verbose=1)
     print_model(model, "lstm_model.png")
     trainScore = model.evaluate(X_train, y_train, verbose=0)
     print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore[0], math.sqrt(trainScore[0])))
@@ -127,5 +125,3 @@ if __name__ == '__main__':
     predic = np.squeeze(
         np.asarray(p))  # para transformar uma matriz de uma coluna e n linhas em um np array de n elementos
     print_series_prediction(y_test, predic)
-
-
