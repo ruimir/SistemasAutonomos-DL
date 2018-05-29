@@ -17,7 +17,6 @@ np.random.seed(seed)
 
 # Carregar os dados do .csv
 def get_ad_data(normalized=0, file_name=None):
-    col_names = ['Month', 'Advertising', 'Sales']
     activity = pd.read_csv(file_name, header=0)
     df = pd.DataFrame(activity)  # Criar dataFrame
     # df.drop(df.columns[[0]], axis=1, inplace=True)  # Largar coluna com data
@@ -82,19 +81,21 @@ def build_model2(janela):
     model = Sequential()
     model.add(LSTM(6, input_shape=(janela, 14)))
     model.add(Dense(1))
-    model.compile(loss='mean_squared_error', optimizer='sgd', metrics=['accuracy'])
+    model.compile(loss='mean_squared_error', optimizer='sgd', metrics=['mse'])
     return model
 
 
 def build_model3(janela):
     model = Sequential()
     model.add(LSTM(30, input_shape=(janela, 14), return_sequences=True))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.1))
+    model.add(LSTM(20, input_shape=(janela, 14), return_sequences=True))
+    model.add(Dropout(0.1))
     model.add(LSTM(10, input_shape=(janela, 14), return_sequences=False))
-    model.add(Dropout(0.2))
-    model.add(Dense(16, activation="relu", kernel_initializer="uniform"))
-    model.add(Dense(1, activation="linear", kernel_initializer="uniform"))
-    model.compile(loss='mse', optimizer='nadam', metrics=['accuracy'])
+    model.add(Dropout(0.1))
+    model.add(Dense(16, activation="relu", kernel_initializer="normal"))
+    model.add(Dense(1, activation="linear", kernel_initializer="normal"))
+    model.compile(loss='mse', optimizer='nadam', metrics=['mse', 'accuracy'])
     return model
 
 
@@ -109,14 +110,14 @@ def LSTM_utilizando_ad_data():
 if __name__ == '__main__':
     df = load_ad_dataset()
     print("df", df.shape)
-    janela = 1  # tamanho da Janela deslizante um ano
+    janela = 2  # tamanho da Janela deslizante um ano
     X_train, y_train, X_test, y_test = load_data(df, janela)
     print("X_train", X_train.shape)
     print("y_train", y_train.shape)
     print("X_test", X_test.shape)
     print("y_test", y_test.shape)
     model = build_model3(janela)
-    model.fit(X_train, y_train, batch_size=10, epochs=1000, verbose=1)
+    model.fit(X_train, y_train, batch_size=10, epochs=5000, verbose=1)
     print_model(model, "lstm_model.png")
     trainScore = model.evaluate(X_train, y_train, verbose=0)
     print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore[0], math.sqrt(trainScore[0])))
