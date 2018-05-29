@@ -41,7 +41,7 @@ def load_data(df_dados, janela):
     mat_dados = df_dados.values  # converter dataframe para matriz (lista com lista de cada registo)
     tam_sequencia = janela + 1
     res = []
-    for i in range(len(mat_dados)-janela):  # numero de registos - tamanho da sequencia
+    for i in range(len(mat_dados) - janela):  # numero de registos - tamanho da sequencia
         res.append(mat_dados[i: i + tam_sequencia])
     res = np.array(res)  # dá como resultado um np com uma lista de matrizes (janela deslizante ao longo da serie)
     qt_casos_treino = 24  # dois anos de treino, um de teste
@@ -82,8 +82,9 @@ def build_model2(janela):
     model = Sequential()
     model.add(LSTM(6, input_shape=(janela, 2)))
     model.add(Dense(1))
-    model.compile(loss='mean_squared_error', optimizer='sgd', metrics=['accuracy'])
+    model.compile(loss='mean_squared_error', optimizer='sgd')
     return model
+
 
 def build_model3(janela):
     model = Sequential()
@@ -91,8 +92,9 @@ def build_model3(janela):
     model.add(Dropout(0.2))
     model.add(LSTM(64, input_shape=(janela, 2), return_sequences=False))
     # model.add(Dropout(0.2))
-    model.add(Dense(1))
-    model.compile(loss='mean_squared_error', optimizer='sgd', metrics=['accuracy'])
+    model.add(Dense(16, activation="relu", kernel_initializer="uniform"))
+    model.add(Dense(1, activation="linear", kernel_initializer="uniform"))
+    model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
     return model
 
 
@@ -107,14 +109,14 @@ def LSTM_utilizando_ad_data():
 if __name__ == '__main__':
     df = load_ad_dataset()
     print("df", df.shape)
-    janela = 2  # tamanho da Janela deslizante um ano
+    janela = 1  # tamanho da Janela deslizante um ano
     X_train, y_train, X_test, y_test = load_data(df, janela)
     print("X_train", X_train.shape)
     print("y_train", y_train.shape)
     print("X_test", X_test.shape)
     print("y_test", y_test.shape)
-    model = build_model2(janela)
-    model.fit(X_train, y_train, batch_size=10, epochs=5000, verbose=1)
+    model = build_model3(janela)
+    model.fit(X_train, y_train, batch_size=10, epochs=1000, verbose=1)
     print_model(model, "lstm_model.png")
     trainScore = model.evaluate(X_train, y_train, verbose=0)
     print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore[0], math.sqrt(trainScore[0])))
