@@ -20,7 +20,7 @@ def get_ad_data(normalized=0, file_name=None):
     col_names = ['Month', 'Advertising', 'Sales']
     activity = pd.read_csv(file_name, header=0)
     df = pd.DataFrame(activity)  # Criar dataFrame
-    df.drop(df.columns[[0]], axis=1, inplace=True)  # Largar coluna com data
+    # df.drop(df.columns[[0]], axis=1, inplace=True)  # Largar coluna com data
     if normalized == 1:
         scaler = MinMaxScaler(feature_range=(0, 1))
         dataset = pd.DataFrame(scaler.fit_transform(df))
@@ -80,26 +80,26 @@ def print_model(model, fich):
 # Etapa 2 - Definir a topologia da rede (arquitectura do modelo) e compilar
 def build_model2(janela):
     model = Sequential()
-    model.add(LSTM(6, input_shape=(janela, 2)))
+    model.add(LSTM(6, input_shape=(janela, 14)))
     model.add(Dense(1))
-    model.compile(loss='mean_squared_error', optimizer='sgd')
+    model.compile(loss='mean_squared_error', optimizer='sgd', metrics=['accuracy'])
     return model
 
 
 def build_model3(janela):
     model = Sequential()
-    model.add(LSTM(128, input_shape=(janela, 2), return_sequences=True))
+    model.add(LSTM(30, input_shape=(janela, 14), return_sequences=True))
     model.add(Dropout(0.2))
-    model.add(LSTM(64, input_shape=(janela, 2), return_sequences=False))
-    # model.add(Dropout(0.2))
+    model.add(LSTM(10, input_shape=(janela, 14), return_sequences=False))
+    model.add(Dropout(0.2))
     model.add(Dense(16, activation="relu", kernel_initializer="uniform"))
     model.add(Dense(1, activation="linear", kernel_initializer="uniform"))
-    model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
+    model.compile(loss='mse', optimizer='nadam', metrics=['accuracy'])
     return model
 
 
 def load_ad_dataset():
-    return get_ad_data(1, 'adData.csv')
+    return get_ad_data(1, 'test2.csv')
 
 
 def LSTM_utilizando_ad_data():
