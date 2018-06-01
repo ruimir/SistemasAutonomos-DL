@@ -86,10 +86,10 @@ def load_data(df_dados, janela):
 def build_model2(janela):
     model = Sequential()
     model.add(LSTM(128, input_shape=(janela, 3), return_sequences=True))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.1))
     model.add(LSTM(64, input_shape=(janela, 3), return_sequences=False))
     # model.add(Dropout(0.2))
-    model.add(Dense(16, activation="relu", kernel_initializer="uniform"))
+    model.add(Dense(16, activation="linear", kernel_initializer="uniform"))
     model.add(Dense(1, activation="linear", kernel_initializer="uniform"))
     model.compile(loss='mse', optimizer='sgd', metrics=['accuracy'])
     return model
@@ -121,7 +121,7 @@ def LSTM_utilizando_GOOGL_data():
     df = load_GOOGL_stock_dataset()
     df = pre_processar_GOOGL_stock_dataset(df)
     print("df", df.shape)
-    janela = 22  # tamanho da Janela deslizante um mes, sem fim de semana por causa da bolsa
+    janela = 2  # tamanho da Janela deslizante um mes, sem fim de semana por causa da bolsa
     X_train, y_train, X_test, y_test = load_data(df[::-1], janela)  # o df[::-1] é o df por ordem inversa
     print("X_train", X_train.shape)
     print("y_train", y_train.shape)
