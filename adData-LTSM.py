@@ -9,6 +9,7 @@ from keras.layers.core import Dense, Dropout, Activation
 from keras.layers.recurrent import LSTM
 
 # fixar random seed para se puder reproduzir os resultados
+from keras.optimizers import Nadam
 from sklearn.preprocessing import MinMaxScaler
 
 seed = 9
@@ -80,45 +81,55 @@ def print_model(model, fich):
 def build_model2(janela):
     model = Sequential()
     model.add(LSTM(128, input_shape=(janela, 14), return_sequences=True))
+    model.add(Dropout(0.2))
     model.add(LSTM(64, input_shape=(janela, 14), return_sequences=False))
-    # model.add(Dropout(0.2))
     model.add(Dense(16, activation="linear", kernel_initializer="uniform"))
     model.add(Dense(1, activation="linear", kernel_initializer="uniform"))
-    model.compile(loss='mse', optimizer='sgd', metrics=['accuracy'])
+    model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
     return model
 
 
 def build_model3(janela):
     model = Sequential()
+    model.add(LSTM(30, input_shape=(janela, 14), return_sequences=True))
+    model.add(Dropout(0.1))
     model.add(LSTM(20, input_shape=(janela, 14), return_sequences=True))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.1))
     model.add(LSTM(10, input_shape=(janela, 14), return_sequences=False))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.1))
     model.add(Dense(16, activation="relu", kernel_initializer="normal"))
     model.add(Dense(1, activation="linear", kernel_initializer="normal"))
     model.compile(loss='mse', optimizer='nadam', metrics=['mse', 'accuracy'])
     return model
 
 
+def build_model4(janela):
+    model = Sequential()
+    model.add(LSTM(30, input_shape=(janela, 14), return_sequences=True))
+    model.add(Dropout(0.2))
+    model.add(LSTM(10, input_shape=(janela, 14), return_sequences=False))
+    model.add(Dropout(0.2))
+    model.add(Dense(16, activation="relu", kernel_initializer="normal"))
+    model.add(Dense(1, activation="linear", kernel_initializer="normal"))
+    optimizer = Nadam(lr=0.05)
+    model.compile(loss='mse', optimizer=optimizer, metrics=['accuracy'])
+    return model
+
+
+
 def load_ad_dataset():
-    return get_ad_data(0, 'test2.csv')
+    return get_ad_data(1, 'test2.csv')
 
 
 def LSTM_utilizando_ad_data():
     pass
 
 
-def fit_model(model, input_attributes, output_attributes):
-    history = model.fit(input_attributes, output_attributes, validation_split=0.33, epochs=150, batch_size=10,
-                        verbose=2)
-    return history
-
-
 def print_history_accuracy(history):
     print(history.history.keys())
     plt.plot(history.history['acc'])
     plt.plot(history.history['val_acc'])
-    plt.title('model accuracy')
+    plt.title('Model Accuracy')
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
@@ -129,7 +140,7 @@ def print_history_loss(history):
     print(history.history.keys())
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
-    plt.title('model loss')
+    plt.title('Model Loss')
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
@@ -146,8 +157,8 @@ if __name__ == '__main__':
     print("X_test", X_test.shape)
     print("y_test", y_test.shape)
     model = build_model3(janela)
-    history = model.fit(X_train, y_train, batch_size=1, validation_data=(X_test, y_test), epochs=200, verbose=2)
-    print_history_accuracy(history)
+    history = model.fit(X_train, y_train, batch_size=1, validation_data=(X_test, y_test), epochs=200, verbose=2,
+                        shuffle=False)
     print_history_loss(history)
     print_model(model, "lstm_model.png")
     trainScore = model.evaluate(X_train, y_train, verbose=0)
