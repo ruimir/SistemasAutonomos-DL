@@ -9,7 +9,6 @@ from keras.layers.core import Dense, Dropout, Activation
 from keras.layers.recurrent import LSTM
 
 # fixar random seed para se puder reproduzir os resultados
-from keras.optimizers import Nadam
 from sklearn.preprocessing import MinMaxScaler
 
 seed = 9
@@ -45,7 +44,7 @@ def load_data(df_dados, janela):
         res.append(mat_dados[i: i + tam_sequencia])
     res = np.array(res)  # dá como resultado um np com uma lista de matrizes (janela deslizante ao longo da serie)
     qt_casos_treino = 24  # dois anos de treino, um de teste
-    train = res[:qt_casos_treino, :]
+    train = res
     x_train = train[:, :-1]  # menos um registo pois o ultimo registo é o registo a seguir à janela
     y_train = train[:, -1][:, -1]  # para ir buscar o último atributo para a lista dos labels
     x_test = res[qt_casos_treino:, :-1]
@@ -77,6 +76,14 @@ def print_model(model, fich):
     plot_model(model, to_file=fich, show_shapes=True, show_layer_names=True)
 
 
+# Etapa 2 - Definir a topologia da rede (arquitectura do modelo) e compilar
+def build_model2(janela):
+    model = Sequential()
+    model.add(LSTM(6, input_shape=(janela, 14)))
+    model.add(Dense(1))
+    model.compile(loss='mean_squared_error', optimizer='sgd', metrics=['mse'])
+    return model
+
 
 def build_model3(janela):
     model = Sequential()
@@ -92,33 +99,12 @@ def build_model3(janela):
     return model
 
 
-
 def load_ad_dataset():
-    #nornalizado
-    return get_ad_data(1, 'adData.csv')
+    return get_ad_data(1, 'test2.csv')
 
 
-
-def print_history_accuracy(history):
-    print(history.history.keys())
-    plt.plot(history.history['acc'])
-    plt.plot(history.history['val_acc'])
-    plt.title('Model Accuracy')
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
-
-
-def print_history_loss(history):
-    print(history.history.keys())
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title('Model Loss')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
+def LSTM_utilizando_ad_data():
+    pass
 
 
 if __name__ == '__main__':
@@ -131,16 +117,14 @@ if __name__ == '__main__':
     print("X_test", X_test.shape)
     print("y_test", y_test.shape)
     model = build_model3(janela)
-    history = model.fit(X_train, y_train, batch_size=1, validation_data=(X_test, y_test), epochs=200, verbose=2,
-                        shuffle=False)
-    print_history_loss(history)
+    model.fit(X_train, y_train, batch_size=10, epochs=5000, verbose=1)
     print_model(model, "lstm_model.png")
     trainScore = model.evaluate(X_train, y_train, verbose=0)
+    print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore[0], math.sqrt(trainScore[0])))
     testScore = model.evaluate(X_test, y_test, verbose=0)
+    print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore[0], math.sqrt(testScore[0])))
     print(model.metrics_names)
     p = model.predict(X_test)
     predic = np.squeeze(
         np.asarray(p))  # para transformar uma matriz de uma coluna e n linhas em um np array de n elementos
     print_series_prediction(y_test, predic)
-    print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore[0], math.sqrt(trainScore[0])))
-    print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore[0], math.sqrt(testScore[0])))
